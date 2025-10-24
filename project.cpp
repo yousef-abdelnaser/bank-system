@@ -1,284 +1,280 @@
 #include <bits/stdc++.h>
 #include <string>
-#include <set>
 #include <map>
 using namespace std;
 
 /************************************/
-
-class accounts
+void process();
+class client_info;
+map<string, client_info> customers;
+int code = 100;
+map<string, bool> exist;
+map<string, bool> allow;
+class client_info
 {
-private:
-    char Name[100];
-    int ID;
-    char Password[7];
+protected:
+    char name[40], password[5];
+    string id;
 
 public:
-    int balance;
-    void New_Account(char c[], int id)
+    long long balance;
+    void Enter_info(char n[], string ID)
     {
-        strcpy(Name, c);
-        ID = id;
-        balance = 0;
-        string Pass = "";
-        for (int i = 0; i < 6; i++)
-        {
-            int digit = rand() % 10;
-            Password[i] = '0' + digit;
-        }
-        Password[6] = '\0';
+        strcpy(name, n), id = ID, balance = 0;
+        string pass = to_string(1000 + rand() % 9000);
+        int j = 0;
+        for (int i = 0; i < 4; i++)
+            password[i] = pass[i];
+        password[4] = '\0';
+        cout << "Your code : " << code << endl
+             << "Your password : " << password << endl
+             << "Please save them to access your account\n";
     }
-    void Client_info()
+    void Show_balance(string code)
+    {
+        cout << "Name : " << name << endl
+             << "Balance : " << balance << endl;
+    }
+    string get_pass()
+    {
+        return password;
+    }
+};
+class Accounts
+{
+public:
+    void new_account()
+    {
+        char name[40];
+        string id;
+        cout << "Enter your name : ";
+        cin >> name;
+        cout << "Enter your ID : ";
+        cin >> id;
+        cout << endl;
+        customers[to_string(code)].Enter_info(name, id);
+        exist[to_string(code)] = true;
+        allow[to_string(code)] = true;
+        code++;
+    }
+};
+class BS : public Accounts, public client_info
+{
+public:
+    bool Depsoit_money(long long amount, string code);
+    bool Withdraw_money(long long amount, string code);
+    bool Transfer_money(long long amount, string code1, string code2);
+    bool Show_account_balance(string code);
+    bool check_pass(string code, char pass[])
+    {
+        return customers[code].get_pass() == string(pass) ? 1 : 0;
+    }
+};
+BS NewBank;
+bool BS::Depsoit_money(long long amount, string code)
+{
+    if (amount >= 0)
+    {
+        customers[code].balance += amount;
+        return 1;
+    }
+    else
+        return 0;
+}
+bool BS::Withdraw_money(long long amount, string code)
+{
+    if (customers[code].balance >= amount)
+    {
+        customers[code].balance -= amount;
+        return 1;
+    }
+    else
+    {
+        cout << "There is not enough money!\n";
+        return 0;
+    }
+}
+bool BS::Transfer_money(long long amount, string code1, string code2)
+{
+    if (exist[code1] && exist[code2])
+    {
+        if (customers[code1].balance >= amount)
+        {
+            customers[code1].balance -= amount, customers[code2].balance += amount;
+            return 1;
+        }
+        else
+        {
+            cout << "There is not enough money!\n";
+            return 0;
+        }
+    }
+    else
+    {
+        cout << "Wrong code!\n";
+        return 0;
+    }
+}
+bool BS::Show_account_balance(string code)
+{
+    if (exist[code])
+    {
+        cout << "Your balance : " << customers[code].balance;
+        return 1;
+    }
+    else
+    {
+        cout << "Wrong code!\n";
+        return 0;
+    }
+}
+short page1()
+{
+    short q;
+    while (true)
     {
         cout << "==================================\n"
-             << "Your name : " << Name << endl
-             << "Your id : " << ID << endl
-             << "Your Password : " << Password << endl;
+             << "Welcome to NeoBank!\n"
+             << "Please choose an option.\n"
+             << "==================================\n"
+             << "1. Log in to your account\n"
+             << "2. Creat a new account\n"
+             << "3. Exit\n"
+             << "==================================\n"
+             << "-> ";
+        cin >> q;
+        if (q > 0 && q < 4)
+        {
+            break;
+        }
     }
-    bool check_pass(char p[])
+    return q;
+}
+void page2(string code)
+{
+    int q;
+    string c = code;
+    cout << "==================================\n"
+         << "1. Depsoit money\n"
+         << "2. Withdraw money\n"
+         << "3. Transfer money\n"
+         << "4. Show account balance\n"
+         << "5. Log out\n"
+         << "==================================\n"
+         << "->";
+    cin >> q;
+    if ((q > 0 && q < 6))
     {
-        if (strcmp(p, Password) == 0)
+
+        long long amount;
+        if (q == 1)
+        {
+            cout << "Enter the amount you want to deposit : ", cin >> amount;
+            bool b = NewBank.Depsoit_money(amount, code);
+            page2(c);
+        }
+        else if (q == 2)
+        {
+            cout << "Enter the amount you want to withdraw : ", cin >> amount;
+            bool b = NewBank.Withdraw_money(amount, code);
+            page2(c);
+        }
+        else if (q == 3)
+        {
+            string T_code;
+            cout << "Enter the account code you want transfer to : ", cin >> T_code;
+            if (exist[T_code])
+            {
+                cout << "Enter the amount you want to transfer : ", cin >> amount;
+                bool b = NewBank.Transfer_money(amount, code, T_code);
+                page2(c);
+            }
+            else
+            {
+                cout << "Wrong code!\n";
+                page2(c);
+            }
+        }
+        else if (q == 4)
+        {
+            NewBank.Show_account_balance(code);
+        }
+        process();
+    }
+}
+void process()
+{
+    int q = page1();
+    if (q == 1)
+    {
+        string code;
+        cout << "Enter your code : ", cin >> code, cout << endl;
+        if (exist[code])
+        {
+            int j = 3;
+            bool x = false;
+            while (j-- && !x)
+            {
+                char pass[5];
+                cout << j << " Enter your password : ", cin >> pass, cout << endl;
+                if (NewBank.check_pass(code, pass))
+                    x = true;
+                else
+                    cout << "Wrong password you have " << j << "try!\n";
+            }
+            if (x)
+            {
+                page2(code);
+            }
+            else
+            {
+                allow[code] = false;
+                process();
+            }
+        }
+        else
+        {
+            cout << "Wrong code!\n";
+            process();
+        }
+    }
+    if (q == 2)
+    {
+        NewBank.new_account();
+        process();
+    }
+    if (q == 3)
+    {
+        exit(0);
+    }
+}
+bool log_in()
+{
+    string code;
+    cout << "Enter your code : ";
+    cin >> code;
+    if (exist[code])
+    {
+        char pass[5];
+        cout << "Enter your password : ";
+        cin >> pass;
+        if (NewBank.check_pass(code, pass))
         {
             return 1;
         }
         else
         {
+            cout << "Wrong password!\n";
             return 0;
         }
     }
-};
-
-map<int, accounts> client;
-
-class operation : public accounts
-{
-private:
-    static int Code;
-
-public:
-    static void op(int p)
+    else
     {
-        Code = p;
-        cout << "==================================\n"
-             << "1. Depsoit money\n"
-             << "2. Withdraw money\n"
-             << "3. Transfer money\n"
-             << "4. Show account balance\n"
-             << "5. Log out\n"
-             << "==================================\n"
-             << "->";
-        int OP = 0;
-        while (!(OP > 0 && OP < 6))
-        {
-            cin >> OP;
-            int amount;
-            if (OP == 1)
-            {
-                cout << "Enter the amount you want to deposit : ";
-                cin >> amount;
-                client[Code].balance += amount;
-                cout << "Successful operation\n";
-            }
-            else if (OP == 2)
-            {
-                while (true)
-                {
-                    cout << "Enter the amount you want to withdraw : ";
-                    cin >> amount;
-                    if (client[Code].balance >= amount)
-                    {
-                        client[Code].balance -= amount;
-                        cout << "Successful operation\n";
-                        break;
-                    }
-                    else
-                    {
-                        cout << "Not enough money\n"
-                             << "Your current balance : " << client[Code].balance << endl;
-                    }
-                }
-            }
-            else if (OP == 3)
-            {
-                cout << "Enter the account code you want transfer to : ";
-                int T_code;
-                while (true)
-                {
-                    cin >> T_code;
-                    if (client.count(T_code))
-                    {
-                        while (true)
-                        {
-                            cout << "Enter the amount you want to transfer : ";
-                            cin >> amount;
-                            if (client[Code].balance >= amount)
-                            {
-                                client[Code].balance -= amount;
-                                client[T_code].balance += amount;
-                                cout << "Successful operation\n";
-                                break;
-                            }
-                            else
-                            {
-                                cout << "Not enough money\n"
-                                     << "Your current balance : " << client[Code].balance << endl;
-                            }
-                        }
-                        break;
-                    }
-                    else
-                    {
-                        cout << "Not a valid code!\n";
-                    }
-                }
-            }
-            else if (OP == 4)
-            {
-                cout << "Your current balance : " << client[Code].balance << endl;
-            }
-            else if (OP == 5)
-            {
-                cout << endl;
-            }
-            else
-            {
-                cout << "Please enter a valid number\n";
-            }
-        }
-        cout << "Thank you for using NeoBack\n\n\n";
+        cout << "Wrong code!\n";
+        return 0;
     }
-};
-int operation::Code = 0;
+}
 int main()
 {
-
-    int number_of_clients = 1;
-    bool x = true;
-    while (x)
-    {
-        {
-            cout << "==================================\n"
-                 << "Welcome to NeoBank!\n"
-                 << "Please choose an option.\n"
-                 << "==================================\n"
-                 << "1. Log in to your account\n"
-                 << "2. Creat a new account\n"
-                 << "3. Close program\n"
-                 << "==================================\n"
-                 << "-> ";
-            int q = 0;
-            while (!(q == 1 || q == 2 || q == 3))
-            {
-                cin >> q;
-                if (q == 1)
-                {
-                    cout << "Please enter your code : ";
-                    int code;
-                    int tries = 0;
-                    while (tries < 3)
-                    {
-                        cin >> code;
-                        tries++;
-                        if (client.count(code))
-                        {
-                            char pass[7];
-                            int t = 0;
-                            while (t < 3)
-                            {
-                                t++;
-                                cout << "Enter the password : ";
-                                cin >> pass;
-                                if (client[code].check_pass(pass))
-                                {
-                                    operation::op(code);
-                                    while (true)
-                                    {
-                                        cout << "Are you want to do any operation ? \n"
-                                             << "1. Yes\n"
-                                             << "2. No\n"
-                                             << "->";
-                                        int A;
-                                        cin >> A;
-                                        if (A == 1)
-                                        {
-                                            operation::op(code);
-                                        }
-                                        else if (A == 2)
-                                        {
-                                            break;
-                                        }
-                                        else
-                                        {
-                                            cout << "Please enter a valid number\n";
-                                        }
-                                    }
-                                    break;
-                                }
-                                else
-                                {
-                                    cout << "Wrong password\n"
-                                         << "You have" << 3 - t << " tries\n";
-                                }
-                            }
-                            if (t == 3)
-                            {
-                                cout << "Sorry your account is locked\n";
-                            }
-                            break;
-                        }
-                        else
-                        {
-                            cout << "Not a valid code!\n";
-                        }
-                    }
-                }
-                else if (q == 2)
-                {
-                    char NAME[100];
-                    int ID;
-                    cout << "Please enter your name : ";
-                    cin.ignore();
-                    cin.getline(NAME, 100);
-                    cout << "Please enter your id : ";
-                    cin >> ID;
-                    client[number_of_clients].New_Account(NAME, ID);
-                    client[number_of_clients].Client_info();
-                    cout << "Your code : " << number_of_clients << endl;
-                    cout << "Thank you for using NeoBack\n\n"
-                         << "==================================\n";
-                    while (true)
-                    {
-                        cout << "Are you want to do any operation ? \n"
-                             << "1. Yes\n"
-                             << "2. No\n"
-                             << "->";
-                        int A;
-                        cin >> A;
-                        if (A == 1)
-                        {
-                            operation::op(number_of_clients);
-                        }
-                        else if (A == 2)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            cout << "Please enter a valid number\n";
-                        }
-                    }
-                    number_of_clients++;
-                }
-                else if (q == 3)
-                {
-                    x = false;
-                }
-                else
-                {
-                    cout << "Please enter a valid number\n";
-                }
-            }
-        }
-    }
-    return 0;
+    process();
 }
