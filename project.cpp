@@ -13,14 +13,14 @@ map<string, bool> allow;
 class client_info
 {
 protected:
-    char name[40], password[5];
+    string name; char password[5];
     string id;
 
 public:
     long long balance;
-    void Enter_info(char n[], string ID)
+    void Enter_info(string n, string ID)
     {
-        strcpy(name, n), id = ID, balance = 0;
+        name = n, id = ID, balance = 0;
         string pass = to_string(1000 + rand() % 9000);
         int j = 0;
         for (int i = 0; i < 4; i++)
@@ -45,10 +45,11 @@ class Accounts
 public:
     void new_account()
     {
-        char name[40];
+        string name;
         string id;
         cout << "Enter your name : ";
-        cin >> name;
+        cin.ignore();
+        getline(cin, name);
         cout << "Enter your ID : ";
         cin >> id;
         cout << endl;
@@ -58,7 +59,7 @@ public:
         code++;
     }
 };
-class BS : public Accounts, public client_info
+class BS : public Accounts
 {
 public:
     bool Depsoit_money(long long amount, string code);
@@ -134,7 +135,7 @@ short page1()
     while (true)
     {
         cout << "==================================\n"
-             << "Welcome to NeoBank!\n"
+             << "Welcome to NeoBank😊!\n"
              << "Please choose an option.\n"
              << "==================================\n"
              << "1. Log in to your account\n"
@@ -211,25 +212,33 @@ void process()
         cout << "Enter your code : ", cin >> code, cout << endl;
         if (exist[code])
         {
-            int j = 3;
-            bool x = false;
-            while (j-- && !x)
+            if (allow[code])
             {
-                char pass[5];
-                cout << j << " Enter your password : ", cin >> pass, cout << endl;
-                if (NewBank.check_pass(code, pass))
-                    x = true;
+                int j = 3;
+                bool x = false;
+                while (j-- && !x)
+                {
+                    char pass[5];
+                    cout << j << " Enter your password : ", cin >> pass, cout << endl;
+                    if (NewBank.check_pass(code, pass))
+                        x = true;
+                    else
+                        cout << "Wrong password you have " << j << "try!\n";
+                }
+                if (x)
+                {
+                    page2(code);
+                }
                 else
-                    cout << "Wrong password you have " << j << "try!\n";
-            }
-            if (x)
-            {
-                page2(code);
+                {
+                    allow[code] = false;
+                    cout << "Your account is locked\n";
+                    process();
+                }
             }
             else
             {
-                allow[code] = false;
-                process();
+                cout << "Your account is locked\n";
             }
         }
         else
@@ -245,33 +254,9 @@ void process()
     }
     if (q == 3)
     {
+        cout << "\nThank you for using NeoBank!\n";
+        cout << "Goodbye 👋\n";
         exit(0);
-    }
-}
-bool log_in()
-{
-    string code;
-    cout << "Enter your code : ";
-    cin >> code;
-    if (exist[code])
-    {
-        char pass[5];
-        cout << "Enter your password : ";
-        cin >> pass;
-        if (NewBank.check_pass(code, pass))
-        {
-            return 1;
-        }
-        else
-        {
-            cout << "Wrong password!\n";
-            return 0;
-        }
-    }
-    else
-    {
-        cout << "Wrong code!\n";
-        return 0;
     }
 }
 int main()
